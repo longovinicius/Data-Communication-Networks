@@ -54,7 +54,7 @@ class MultiProtocol_Client:
                 start = time.perf_counter()
                 if self.data:
                     average = sum(self.data) / len(self.data)
-                    s.sendto(str(average).encode('utf-8'), (self.ip, self.port))
+                    s.sendto(str(round(average, 3)).encode('utf-8'), (self.ip, self.port))
                 elapsed = time.perf_counter() - start
                 time.sleep(max(self.x - elapsed, 0))
         elif self.protocol == "MQTT":
@@ -62,7 +62,7 @@ class MultiProtocol_Client:
                 start = time.perf_counter()
                 if self.data:
                     average = sum(self.data) / len(self.data)
-                    self.mqtt_client.publish("temperature", str(average))
+                    self.mqtt_client.publish("temperature", str(round(average, 3)))
                 elapsed = time.perf_counter() - start
                 time.sleep(max(self.x - elapsed, 0))
         elif self.protocol == "HTTP":
@@ -70,7 +70,7 @@ class MultiProtocol_Client:
                 start = time.perf_counter()
                 if self.data:
                     average = sum(self.data) / len(self.data)
-                    requests.post(f"http://{self.ip}:{self.port}/temperature", data={"value": average})
+                    requests.post(f"http://{self.ip}:{self.port}/temperature", data={"value": round(average, 3)})
                 elapsed = time.perf_counter() - start
                 time.sleep(max(self.x - elapsed, 0))
 
