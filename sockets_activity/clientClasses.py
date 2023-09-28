@@ -3,7 +3,7 @@ import psutil
 import socket
 import threading
 from functools import reduce
-
+import http.client
 
 class GenericClient:
     def __init__(self):
@@ -150,25 +150,40 @@ class MQTTClient(GenericClient):
         # Implement MQTT-specific logic to disconnect
         print("Disconnected from MQTT broker")
 
-
 class HTTPClient(GenericClient):
-    def __init__(self, host, port, route):
-        super().__init__(host, port)
+    def __init__(self, host, port, route="/"):
+        super().__init__()
+        self.ip = host
+        self.port = port
         self.route = route
-        # Add HTTP-specific initialization here
 
     def connect(self):
-        # Implement HTTP-specific logic to establish a connection
-        print(f"Connected to HTTP server at {self.ip}:{self.port}")
+        print(f"Ready to connect to HTTP server at {self.ip}:{self.port}")
 
     def send_data(self, data):
-        # Implement HTTP-specific logic to send data
-        print(f"Sent data '{data}' to route {self.route}")
-
-    def receive_data(self):
-        # Implement HTTP-specific logic to receive data
-        print("Received data from HTTP server")
+        try:
+            conn = http.client.HTTPConnection(self.ip, self.port)
+            headers = {'Content-Type': 'text/plain'}
+            conn.request('POST', self.route, body=data, headers=headers)
+            response = conn.getresponse()
+            print(f"Sent data '{data}' to route {self.route}. Response: {response.status} {response.reason}")
+        except Exception as e:
+            print(f"Failed to send data to {self.ip}:{self.port}. Error: {e}")
 
     def disconnect(self):
-        # Implement HTTP-specific logic to disconnect
         print("Disconnected from HTTP server")
+
+client = HTTPClient('localhost', 8000, '/')
+client.connect()
+
+try:
+    while True:
+        avg_temp = client.GET_AVG_TEMPERATURE()
+        if avg_temp is not None:
+            temperature_data = "{:.2f}°C".format(avg_temp)
+            client.send_data(temperature_data)
+        time.sleep(10)  # Send data every 10 seconds
+
+except KeyboardInterrupt:
+    print("\nStopping client...")
+    client.disconnect()
